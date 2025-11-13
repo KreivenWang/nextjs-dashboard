@@ -38,7 +38,6 @@ export async function fetchLatestInvoices() {
       JOIN customers ON invoices.customer_id = customers.id
       ORDER BY invoices.date DESC
       LIMIT 5`;
-    console.log('Fetched latest invoices');
 
     const latestInvoices = data.map((invoice) => ({
       ...invoice,
@@ -114,6 +113,7 @@ export async function fetchFilteredInvoices(
       ORDER BY invoices.date DESC
       LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
     `;
+    console.log(`Fetched ${invoices.length} invoices for query ${query}`);
 
     return invoices;
   } catch (error) {
