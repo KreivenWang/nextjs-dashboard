@@ -113,7 +113,7 @@ export async function fetchFilteredInvoices(
       ORDER BY invoices.date DESC
       LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
     `;
-    console.log(`Fetched ${invoices.length} invoices for query ${query}`);
+    console.log(`Fetched ${invoices.length} invoices for query (${query})`);
 
     return invoices;
   } catch (error) {
