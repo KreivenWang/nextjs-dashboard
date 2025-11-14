@@ -1,6 +1,8 @@
 "use client";
 
+import { updateInvoice } from "@/app/lib/actions";
 import { CustomerField, InvoiceForm } from "@/app/lib/definitions";
+import { Button } from "@/app/ui/button";
 import {
   CheckIcon,
   ClockIcon,
@@ -8,8 +10,8 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { Button } from "@/app/ui/button";
-import { updateInvoice } from "@/app/lib/actions";
+import { useActionState } from "react";
+import useValidationToast from "../toast/use-validation-toast";
 
 export default function EditInvoiceForm({
   invoice,
@@ -18,16 +20,14 @@ export default function EditInvoiceForm({
   invoice: InvoiceForm;
   customers: CustomerField[];
 }) {
-  async function handleUpdateInvoice(formData: FormData) {
-    const result = await updateInvoice(invoice.id, formData);
-    if (result && result.error) {
-      // Handle error here, e.g., show a toast or set state
-      console.error(result.error);
-    }
-    // Optionally, redirect or update UI
-  }
+  const updateInvoiceWithId = updateInvoice.bind(null, invoice.id);
+  const [state, dispatch] = useActionState(updateInvoiceWithId, {
+    fieldErrors: {},
+  });
+  useValidationToast(state);
+
   return (
-    <form action={handleUpdateInvoice}>
+    <form action={dispatch}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">

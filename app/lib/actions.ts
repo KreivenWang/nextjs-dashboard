@@ -8,9 +8,15 @@ import logger from "@/app/lib/logger";
 
 const invoiceSchema = z.object({
   id: z.string(),
-  customerId: z.string(),
-  amount: z.coerce.number().positive(),
-  status: z.enum(["pending", "paid"]),
+  customerId: z.string({
+    required_error: "Please select a customer",
+    invalid_type_error: "Please select a customer",
+  }),
+  amount: z.coerce.number().gt(0, "Please enter an amount greater than $0"),
+  status: z.enum(["pending", "paid"], {
+    required_error: "Please select a invoice status",
+    invalid_type_error: "Please select a invoice status",
+  }),
   date: z.string(),
 });
 
@@ -19,12 +25,34 @@ const UpdateInvoiceSchema = invoiceSchema.omit({ id: true, date: true });
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
-export async function createInvoice(prevState: any, formData: FormData) {
-  const initialState = { message: null, error: '' };
+export type State = {
+  fieldErrors?: {
+    customerId?: string[];
+    amount?: string[];
+    status?: string[];
+  };
+  successToast?: string;
+  errorToast?: string;
+};
+
+export async function createInvoice(
+  prevState: State,
+  formData: FormData
+): Promise<State> {
   try {
     const rawFormData = Object.fromEntries(formData.entries());
-    const parsed = CreateInvoiceSchema.parse(rawFormData);
-    const { customerId, amount, status } = parsed;
+    const parsed = CreateInvoiceSchema.safeParse(rawFormData);
+    if (!parsed.success) {
+      logger.info(
+        "createInvoice: Invalid form data:",
+        parsed.error.flatten().fieldErrors
+      );
+      return {
+        fieldErrors: parsed.error.flatten().fieldErrors,
+        errorToast: "Please check marked errors. Failed to Create Invoice.",
+      };
+    }
+    const { customerId, amount, status } = parsed.data;
     const amountInCents = amount * 100;
     const date = new Date().toISOString().split("T")[0]; // 2025-11-13
     logger.info(
@@ -37,19 +65,34 @@ export async function createInvoice(prevState: any, formData: FormData) {
   `;
   } catch (error) {
     logger.error("Error creating invoice:", error);
-    return { ...initialState, error: "Database Error: Failed to Create Invoice" };
+    return {
+      errorToast: "Database Error: Failed to Create Invoice",
+    };
   }
 
   revalidatePath("/dashboard/invoices");
-  // 移除重定向，返回成功状态
-  return { message: "Invoice created successfully", error: "" };
+  redirect(`/dashboard/invoices`);
 }
 
-export async function updateInvoice(invoiceId: string, formData: FormData) {
+export async function updateInvoice(
+  invoiceId: string,
+  prevState: State,
+  formData: FormData
+): Promise<State> {
   try {
     const rawFormData = Object.fromEntries(formData.entries());
-    const parsed = UpdateInvoiceSchema.parse(rawFormData);
-    const { customerId, amount, status } = parsed;
+    const parsed = UpdateInvoiceSchema.safeParse(rawFormData);
+    if (!parsed.success) {
+      logger.info(
+        "updateInvoice: Invalid form data:",
+        parsed.error.flatten().fieldErrors
+      );
+      return {
+        fieldErrors: parsed.error.flatten().fieldErrors,
+        errorToast: "Please check marked errors. Failed to Update Invoice.",
+      };
+    }
+    const { customerId, amount, status } = parsed.data;
     const amountInCents = amount * 100;
     logger.info(
       `updateInvoice: amountInCents ${amountInCents}, customerId ${customerId}, status ${status}`
@@ -62,13 +105,19 @@ export async function updateInvoice(invoiceId: string, formData: FormData) {
   `;
   } catch (error) {
     logger.error("Error updating invoice:", error);
-    return { error: "Database Error: Failed to Update Invoice" };
+    return {
+      errorToast: "Database Error: Failed to Update Invoice",
+    };
   }
   revalidatePath("/dashboard/invoices");
-  redirect("/dashboard/invoices");
+  redirect(`/dashboard/invoices`);
 }
 
-export async function deleteInvoice(invoiceId: string) {
+export async function deleteInvoice(
+  invoiceId: string,
+  prevState: State,
+  formData: FormData
+): Promise<State> {
   try {
     await sql`
     DELETE FROM invoices
@@ -76,8 +125,11 @@ export async function deleteInvoice(invoiceId: string) {
   `;
   } catch (error) {
     logger.error("Error deleting invoice:", error);
-    return { error: "Database Error: Failed to Delete Invoice" };
+    return {
+      errorToast: "Database Error: Failed to Delete Invoice",
+    };
   }
 
   revalidatePath("/dashboard/invoices");
+  return { successToast: "Invoice deleted successfully" };
 }
