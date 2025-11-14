@@ -18,9 +18,16 @@ export default function EditInvoiceForm({
   invoice: InvoiceForm;
   customers: CustomerField[];
 }) {
-  const updateInvoiceById = updateInvoice.bind(null, invoice.id);
+  async function handleUpdateInvoice(formData: FormData) {
+    const result = await updateInvoice(invoice.id, formData);
+    if (result && result.error) {
+      // Handle error here, e.g., show a toast or set state
+      console.error(result.error);
+    }
+    // Optionally, redirect or update UI
+  }
   return (
-    <form action={updateInvoiceById}>
+    <form action={handleUpdateInvoice}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">

@@ -20,6 +20,7 @@ const UpdateInvoiceSchema = invoiceSchema.omit({ id: true, date: true });
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
 export async function createInvoice(prevState: any, formData: FormData) {
+  const initialState = { message: null, error: '' };
   try {
     const rawFormData = Object.fromEntries(formData.entries());
     const parsed = CreateInvoiceSchema.parse(rawFormData);
@@ -36,11 +37,12 @@ export async function createInvoice(prevState: any, formData: FormData) {
   `;
   } catch (error) {
     logger.error("Error creating invoice:", error);
-    return { error: "Database Error: Failed to Create Invoice" };
+    return { ...initialState, error: "Database Error: Failed to Create Invoice" };
   }
 
   revalidatePath("/dashboard/invoices");
-  redirect("/dashboard/invoices");
+  // 移除重定向，返回成功状态
+  return { message: "Invoice created successfully", error: "" };
 }
 
 export async function updateInvoice(invoiceId: string, formData: FormData) {

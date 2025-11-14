@@ -1,3 +1,5 @@
+"use client";
+
 import { CustomerField } from '@/app/lib/definitions';
 import Link from 'next/link';
 import {
@@ -8,10 +10,31 @@ import {
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
 import { createInvoice } from '@/app/lib/actions';
+import { useFormState } from 'react-dom';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Form({ customers }: { customers: CustomerField[] }) {
+  const router = useRouter();
+  const initialState = { message: null, error: '' };
+  const [state, dispatch] = useFormState(createInvoice, initialState);
+
+  useEffect(() => {
+    // 当没有错误时，表示创建成功，重定向到发票列表页面
+    if (!state?.error) {
+      // 添加一个小延迟，让用户看到提交成功的效果
+      const timer = setTimeout(() => {
+        if (state?.message) {
+          router.push('/dashboard/invoices');
+          router.refresh();
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [state, router]);
+
   return (
-    <form action={createInvoice}>
+    <form action={dispatch}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">
@@ -98,6 +121,13 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
             </div>
           </div>
         </fieldset>
+
+        {/* 显示错误信息 */}
+        <div aria-live="polite" aria-atomic="true">
+          {state?.error && (
+            <p className="mt-2 text-sm text-red-500">{state.error}</p>
+          )}
+        </div>
       </div>
       <div className="mt-6 flex justify-end gap-4">
         <Link
