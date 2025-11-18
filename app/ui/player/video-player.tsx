@@ -127,7 +127,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = () => {
     }
 
     // 设置页面标题
-    document.title = (title || '未知视频') + ' - LibreTV播放器';
+    document.title = (title || '未知视频') + ' - TenInkyTV';
   }, []); // 现在只在组件挂载时执行一次
 
   // 初始化播放器

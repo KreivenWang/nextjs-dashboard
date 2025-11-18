@@ -20,6 +20,7 @@ async function getUser(email: string): Promise<User | null> {
 
 export const { auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  secret: process.env.AUTH_SECRET,
   /**
    * The Credentials provider allows users to log in with a username and a password.
    */
