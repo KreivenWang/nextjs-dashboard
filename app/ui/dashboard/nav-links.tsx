@@ -21,7 +21,7 @@ const links = [
     icon: DocumentDuplicateIcon,
   },
   { name: "Customers", href: "/dashboard/customers", icon: UserGroupIcon },
-  { name: "VideoPlayer", href: "/dashboard/player", icon: FilmIcon },
+  { name: "VideoPlayer", href: "/dashboard/video-player", icon: FilmIcon },
   { name: "WatchHistory", href: "/dashboard/watch-history", icon: ChatBubbleLeftEllipsisIcon },
 ];
 
