@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import postgres from "postgres";
 import { z } from "zod";
 import logger from "@/app/lib/logger";
+import { signIn } from "@/auth";
+import { AuthError } from "next-auth";
 
 const invoiceSchema = z.object({
   id: z.string(),
@@ -25,15 +27,18 @@ const UpdateInvoiceSchema = invoiceSchema.omit({ id: true, date: true });
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
-export type State = {
+export interface ToastState {
+  successToast?: string;
+  errorToast?: string;
+}
+
+export interface State extends ToastState {
   fieldErrors?: {
     customerId?: string[];
     amount?: string[];
     status?: string[];
   };
-  successToast?: string;
-  errorToast?: string;
-};
+}
 
 export async function createInvoice(
   prevState: State,
@@ -132,4 +137,59 @@ export async function deleteInvoice(
 
   revalidatePath("/dashboard/invoices");
   return { successToast: "Invoice deleted successfully" };
+}
+
+export async function authenticate(
+  prevState: ToastState,
+  formData: FormData
+): Promise<ToastState> {
+  try {
+    const email = formData.get("email");
+    const password = formData.get("password");
+    const redirectTo = formData.get("redirectTo") as string || "/dashboard";
+    logger.info("redirectTo test reference:", redirectTo);
+    if (!email || !password) {
+      return {
+        errorToast: "Please enter email and password",
+      } satisfies ToastState;
+    }
+
+    const signInResult = await signIn("credentials", {
+      email: formData.get("email"),
+      password: formData.get("password"),
+      redirect: false, // avoid NEXT_REDIRECT error
+    });
+
+    if (signInResult?.error) {
+      return {
+        errorToast: "Invalid credentials. Please try again.",
+      } satisfies ToastState;
+    }
+  } catch (error) {
+    logger.error("Error authenticating user:", error);
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        /**
+         * If there's a 'CredentialsSignin' error,
+         * you want to show an appropriate error message.
+         * You can learn about NextAuth.js errors in
+         * https://authjs.dev/reference/core/errors#credentialssignin
+         */
+        case "CredentialsSignin":
+          return {
+            errorToast: "Invalid credentials. Please try again.",
+          } satisfies ToastState;
+        default:
+          return {
+            errorToast:
+              "Something went wrong. Please try again. " + error.message,
+          } satisfies ToastState;
+      }
+    }
+    return {
+      errorToast: "Database Error: Failed to Authenticate User",
+    };
+  }
+
+  redirect("/dashboard");
 }

@@ -1,9 +1,9 @@
-import { State } from "@/app/lib/actions";
+import { ToastState } from "@/app/lib/actions";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 
 // 自定义 Hook：根据 state 展示 Toast
-const useValidationToast = (state: State) => {
+const useValidationToast = (state: ToastState) => {
   useEffect(() => {
     if (state.errorToast) {
       toast.error(state.errorToast);
