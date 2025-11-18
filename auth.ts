@@ -19,11 +19,9 @@ async function getUser(email: string): Promise<User | null> {
 }
 
 export const { auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET, // 在NextAuth v5 beta版本中可能仍需要显式设置
   ...authConfig,
-  secret: process.env.AUTH_SECRET,
-  /**
-   * The Credentials provider allows users to log in with a username and a password.
-   */
+  trustHost: true,
   providers: [
     Credentials({
       async authorize(credentials) {
