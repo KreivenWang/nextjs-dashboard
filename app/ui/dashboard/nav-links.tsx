@@ -4,6 +4,8 @@ import {
   UserGroupIcon,
   HomeIcon,
   DocumentDuplicateIcon,
+  FilmIcon,
+  ChatBubbleLeftEllipsisIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
@@ -19,6 +21,8 @@ const links = [
     icon: DocumentDuplicateIcon,
   },
   { name: "Customers", href: "/dashboard/customers", icon: UserGroupIcon },
+  { name: "VideoPlayer", href: "/dashboard/player", icon: FilmIcon },
+  { name: "WatchHistory", href: "/dashboard/watch-history", icon: ChatBubbleLeftEllipsisIcon },
 ];
 
 export default function NavLinks() {
